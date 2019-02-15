@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>Index</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>MeanVarianceAnalysis</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
 <style type="text/css">
@@ -11775,23 +11775,17 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Quantitative-Portfolio-Management">Quantitative Portfolio Management<a class="anchor-link" href="#Quantitative-Portfolio-Management">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="1.-Classical-Portfolio-Theory">1. Classical Portfolio Theory<a class="anchor-link" href="#1.-Classical-Portfolio-Theory">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><a href="https://philip-xx.github.io/Html/MeanVarianceAnalysis">https://philip-xx.github.io/Html/MeanVarianceAnalysis</a></p>
+<p>In this first notebook, we'll start to work with Quantopian and Python. This first problem set helps us to construct the efficient frontier and the capital market line.</p>
+<p>Every box that has "In []:" in front of it needs to be run. To run it, put your cursor in the box and then push the "play button" on top. Alternatively, you can press "shift+enter."</p>
+<p>We proceed in five steps:</p>
+<ol>
+<li>Initialize Python. There are some basic lines of code that we always add. </li>
+<li>We download returns on two securities: Amazon (ticker: AMZN) and Goldman Sachs (ticker: GS).</li>
+<li>We compute the returns of portfolios that combine the two securities with different weights.</li>
+<li>We compute the means and variances of the portfolio returns from step 3, leading to the efficient frontier.</li>
+<li>We compute the capital market line (CML) by combining the risk-free rate (which we set to zero, consistent with the short-term interest rate in today's financial markets) and the efficient portfolio.</li>
+</ol>
+<p>Let's get started!</p>
 
 </div>
 </div>
@@ -11800,7 +11794,164 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="2.-Market-Timing-Using-Volatility">2. Market Timing Using Volatility<a class="anchor-link" href="#2.-Market-Timing-Using-Volatility">&#182;</a></h2>
+<p>Step 1: Initializing Python.</p>
+<p>Python uses libraries with pre-coded functions that make it really easy to compute all the statistics we need, such as means, variances, et cetera. In this problem set, we use the following three lines. Now run this first block. If this works, the message "Python is ready to go!" appears.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="k">print</span> <span class="s2">&quot;Python is ready to go!&quot;</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Step 2: Downloading data.</p>
+<p>Let's download the data. I first provide an example for Apple. The following two lines of code download the data for Apple (ticker: AAPL). This lines creates a table with dates in the rows. In the first column, we have the date and in the second column the price. The price is adjusted for splits, dividend payments, ... In historical tests, we always use this price variable (instead of, for instance, the close price).</p>
+<p>At any point, you can see what's in the table by printing the first couple of lines by the command
+"print AAPL.head()". The default is 5. If you'd like to see more lines, let's say 10 lines, you can use "print AAPL.head(10)". Similarly, if you'd like to see the last lines, you use "AAPL.tail()".</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">AAPL</span> <span class="o">=</span> <span class="n">get_pricing</span><span class="p">(</span><span class="s1">&#39;AAPL&#39;</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="s1">&#39;2007-1-1&#39;</span><span class="p">,</span> <span class="n">end_date</span><span class="o">=</span><span class="s1">&#39;2018-1-24&#39;</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="s2">&quot;price&quot;</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">AAPL</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Note that this line of code only gets the prices from days that markets are opened. Hence, weekends and holidays are removed already.</p>
+<p>Let's plot the price index. The first line of code constructs the graph. The next three lines provide the labels for the axes and defines the legend.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">AAPL</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">AAPL</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Price&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Apple&#39;</span><span class="p">]);</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Next, we want to compute returns. Given that we have a total return index (that is, prices already include dividends), we compute returns as R(t) = P(t)/P(t-1)-1. The code "AAPL.shift(1)" shifts the data one day backwards.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">AAPL_ret</span> <span class="o">=</span> <span class="n">AAPL</span><span class="o">/</span><span class="n">AAPL</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+
+<span class="k">print</span> <span class="n">AAPL_ret</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As you can see, we created a missing value (NaN) for the first observation. After all, we do not have the price before January 3, 2007. To get rid of it, we can start our return series 1 day later and drop the first observation. In Python, the index of a table starts at 0. Hence, we want to start our data from index 1. The code 
+"AAPL_ret = AAPL_ret[1:]"
+selects all data starting at the second observation. Let's try it:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">AAPL_ret</span> <span class="o">=</span> <span class="n">AAPL_ret</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="k">print</span> <span class="n">AAPL_ret</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>There is a more efficient way to compute returns now that we understand the mechanics. The following line of code computes the percent difference, just like we did before, and drops the first observation:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">AAPL_ret</span> <span class="o">=</span> <span class="n">AAPL</span><span class="o">.</span><span class="n">pct_change</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>
+<span class="k">print</span> <span class="n">AAPL_ret</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We're now ready for the first part of our problem set. In the box below, write the following code:</p>
+<ol>
+<li>Download the data for the two stocks in two variables, called AMZN and GS.</li>
+<li>Compute the returns in AMZN_ret and GS_ret and drop the first observation.</li>
+</ol>
+<p>==&gt; Q1: Report the first three prices of Amazon and Goldman (January 3, 4, and 5 2007).</p>
+
 </div>
 </div>
 </div>
@@ -11808,7 +11959,329 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><a href="https://chrisrackauckas.github.io/JupyterSite/">https://chrisrackauckas.github.io/JupyterSite/</a></p>
+<p>Now let's plot the price series of both stocks. If all variables are computed correctly, you can run the plot below.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">AMZN</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">AMZN</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">GS</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">GS</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Price&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Amazon&#39;</span><span class="p">,</span><span class="s1">&#39;Goldman Sachs&#39;</span><span class="p">]);</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>==&gt; Q2: Save the figure in your problem set.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Next, we want to combine both securities into a portfolio and find the efficient frontier. Here, we use a trick called "loops." Instead of manually computing lots of different combinations of the portfolio, we can use just a couple of lines of code to do this for us.</p>
+<p>Let's consider a simple example of a loop. Suppose we want to consider 3 portfolios: (100%,0%), (50%,50%), and (0%, 100%). We can do this via:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="k">print</span> <span class="n">weight</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The first line tells us the values w will take. In this case, 0, 1, and 2. Then we define the weight in steps of 50%. The last line, like we have seen before, prints the value of the portfolio weight.</p>
+<p>There is an important note here: The loop executes all lines that are indented. If they're not indented, they'll not be executed as part of the loop.</p>
+<p>Next, we want to compute the portfolio return in each step of the loop. The return on the portfolio is:</p>
+<p>"return_portfolio = weight <em> AMZN_ret + (1-weight) </em> GS_ret"</p>
+<p>That is, we take the weighted average of both returns.</p>
+<p>Once we have the portfolio return, we want to compute the mean and the standard deviation. Remember we started with the first couple of lines of code? We need these packages now. Pyhton has lots of useful functions already programmed for you (just like Excel). We now want to know the mean and the standard deviation of our portfolio.</p>
+<p>The mean is computed as np.mean() and the standard deviation as np.std(). We put them together in a row of a table with the portfolio weight first.</p>
+<p>for w in xrange(0,3):
+    weight = w <em> 0.5
+    return_portfolio = weight </em> AMZN_ret + (1-weight) * GS_ret
+    print [weight, np.mean(return_portfolio), np.std(return_portfolio)]</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Instead of printing each line, we'd like to store the results in a table so we plot it easily. We can do this using the "append" command. We start from two empty tables (portfolio_mean and portfolio_std). Then in every iteration of the loop, we add the mean and standard deviation, respectively.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">portfolio_mean</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">portfolio_std</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">return_portfolio</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">AMZN_ret</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">weight</span><span class="p">)</span> <span class="o">*</span> <span class="n">GS_ret</span>
+    <span class="n">portfolio_mean</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    <span class="n">portfolio_std</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now let's plot the minimum-variance frontier!</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">portfolio_std</span><span class="p">,</span> <span class="n">portfolio_mean</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Standard deviation&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Mean&#39;</span><span class="p">);</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>That starts to look like a minimum-variance frontier. However, as we only compute 3 portfolios, the line doesn't look very smooth. So let's now take steps of 5%. In the box below, adjust the code so that the loop takes steps from 0%, 5%, ..., 100%.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If this all worked out, the code below should give you a smooth efficient frontier.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">portfolio_std</span><span class="p">,</span> <span class="n">portfolio_mean</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Standard deviation&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Mean&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.028</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">]);</span>   
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>==&gt; Q3: Copy the plot of the efficient frontier to your problem set.</p>
+<p>However, you can see that the curve abruptly ends. We need to short a stock to complete the curve. We can do this by extending the loop. Below the code for weights ranging from (-100%,200%), (-90%,190%), ..., (200%,-100%). Hence, each portfolio adds up to 100%. The code below does exactly that.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">portfolio_mean</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">portfolio_std</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">31</span><span class="p">):</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="mf">0.10</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">return_portfolio</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">AMZN_ret</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">weight</span><span class="p">)</span> <span class="o">*</span> <span class="n">GS_ret</span>
+    <span class="n">portfolio_mean</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    <span class="n">portfolio_std</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">portfolio_std</span><span class="p">,</span> <span class="n">portfolio_mean</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Standard deviation&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Mean&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0015</span><span class="p">,</span> <span class="mf">0.003</span><span class="p">]);</span>       
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Lastly, we want to construct the capital market line. The capital market line combines the risk-free rate (zero in this problem set) and the combination of both stocks with the highest possible Sharpe ratio. Recall that the Sharpe ratio is defined as (E(r)-rf) / stdev(r). So let's add the Sharpe ratio to the loop.</p>
+<p>The last line selects the portfolio that maximizes the Sharpe ratio.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">portfolio_mean</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">portfolio_std</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">portfolio_weight</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">portfolio_SR</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">31</span><span class="p">):</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="mf">0.10</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">return_portfolio</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">AMZN_ret</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">weight</span><span class="p">)</span> <span class="o">*</span> <span class="n">GS_ret</span>
+    <span class="n">portfolio_mean</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    <span class="n">portfolio_std</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    <span class="n">portfolio_weight</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
+    <span class="n">portfolio_SR</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The table portfolio_SR contains the Sharpe ratio of each portfolio. Let's plot it to see what it looks like.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">portfolio_weight</span><span class="p">,</span> <span class="n">portfolio_SR</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Portfolio weight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Sharpe ratio&#39;</span><span class="p">);</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now instead of reading off the figure what the efficient portfolio is, let's do this using Python.</p>
+<p>The code
+"portfolio_SR.index(max(portfolio_SR))"</p>
+<p>returns the line of the table that contains the maximum Sharpe ratio. Then we look up in the table "portfolio_weight" what the corresponding weight is.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">SR_maximum</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">portfolio_SR</span><span class="p">)</span>
+<span class="k">print</span> <span class="s2">&quot;Optimal portfolio weight:&quot;</span><span class="p">,</span> <span class="n">portfolio_weight</span><span class="p">[</span><span class="n">portfolio_SR</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">SR_maximum</span><span class="p">)]</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To complete this exercise, we plot the capital market line.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">portfolio_mean</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">portfolio_std</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">mean_CML</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">31</span><span class="p">):</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="mf">0.10</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">return_portfolio</span> <span class="o">=</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">AMZN_ret</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">weight</span><span class="p">)</span> <span class="o">*</span> <span class="n">GS_ret</span>
+    <span class="n">portfolio_mean</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    <span class="n">portfolio_std</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    <span class="n">mean_CML</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SR_maximum</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">return_portfolio</span><span class="p">))</span>
+    
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">portfolio_std</span><span class="p">,</span> <span class="n">portfolio_mean</span><span class="p">,</span><span class="n">portfolio_std</span><span class="p">,</span><span class="n">mean_CML</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Standard deviation&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Mean&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.003</span><span class="p">]);</span>     
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>==&gt; Q4: Save the figure in your problem set.</p>
+<p>Done!</p>
 
 </div>
 </div>
