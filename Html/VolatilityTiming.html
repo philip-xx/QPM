@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8" />
-<title>Index</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>VolatilityTiming</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 
 <style type="text/css">
@@ -11775,40 +11775,81 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Quantitative-Portfolio-Management">Quantitative Portfolio Management<a class="anchor-link" href="#Quantitative-Portfolio-Management">&#182;</a></h1>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="1.-Classical-Portfolio-Theory">1. Classical Portfolio Theory<a class="anchor-link" href="#1.-Classical-Portfolio-Theory">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><a href="https://philip-xx.github.io/QPM/Html/MeanVarianceAnalysis.html">https://philip-xx.github.io/QPM/Html/MeanVarianceAnalysis.html</a></p>
+<p>Problem set 2: Understanding volatility-timing.</p>
+<p>In this problem set, we will study the volatility-timing strategy in more detail.</p>
+<p>Create a new algorithm in "My Code" on the top right and delete all the text that Quantopian starts with in the left panel. Then copy the code below instead (so do <em>not</em> run the code in the notebook as we did for last week's homework).</p>
 
 </div>
 </div>
 </div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+    
+    <span class="n">context</span><span class="o">.</span><span class="n">SPY</span> <span class="o">=</span> <span class="n">symbol</span><span class="p">(</span><span class="s1">&#39;SPY&#39;</span><span class="p">)</span>
+    
+    <span class="n">schedule_function</span><span class="p">(</span><span class="n">rebalance</span><span class="p">,</span> 
+                      <span class="n">date_rules</span><span class="o">.</span><span class="n">month_start</span><span class="p">(),</span>
+                      <span class="n">time_rules</span><span class="o">.</span><span class="n">market_open</span><span class="p">())</span>
+    
+    <span class="n">schedule_function</span><span class="p">(</span><span class="n">record_vars</span><span class="p">,</span> 
+                     <span class="n">date_rules</span><span class="o">.</span><span class="n">every_day</span><span class="p">(),</span>
+                     <span class="n">time_rules</span><span class="o">.</span><span class="n">market_close</span><span class="p">())</span>
+    
+<span class="k">def</span> <span class="nf">record_vars</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="n">record</span><span class="p">(</span><span class="n">leverage</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">leverage</span><span class="p">,</span> <span class="n">cash</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">portfolio</span><span class="o">.</span><span class="n">cash</span><span class="o">/</span><span class="n">context</span><span class="o">.</span><span class="n">portfolio</span><span class="o">.</span><span class="n">portfolio_value</span><span class="p">)</span>
+    
+<span class="k">def</span> <span class="nf">compute_weights</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="n">prices</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">history</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">SPY</span><span class="p">,</span> <span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;1d&#39;</span><span class="p">)</span>
+    <span class="n">returns</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">pct_change</span><span class="p">()</span>
+    <span class="n">std_20</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">250</span><span class="p">)</span>
+    
+    <span class="n">weight</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">/</span> <span class="n">std_20</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">weight</span>
+    
+    
+<span class="k">def</span> <span class="nf">rebalance</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">compute_weights</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">can_trade</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">SPY</span><span class="p">):</span>
+        <span class="n">order_target_percent</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">SPY</span><span class="p">,</span><span class="n">weight</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="2.-Market-Timing-Using-Volatility">2. Market Timing Using Volatility<a class="anchor-link" href="#2.-Market-Timing-Using-Volatility">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div>
-<div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p><a href="https://philip-xx.github.io/QPM/Html/VolatilityTiming.html">https://philip-xx.github.io/QPM/Html/VolatilityTiming.html</a></p>
+<p>This is the code that we discussed in class. We will now modify the strategy to better understand the low-volatility strategy. Every time that you change the strategy, first run "Build Algorithm."</p>
+<p>In all cases, report:</p>
+<ol>
+<li>Alpha.</li>
+<li>Beta. </li>
+<li>Sharpe ratio.</li>
+<li>The total returns.</li>
+<li>The returns on the benchmark.</li>
+</ol>
+<p>Quantopian reports all these results by running a "full backtest," which you see on the top right of your screen.</p>
+<p><em>In all cases, include a screenshot of the code you're using in your answers</em></p>
+<p>=&gt; Q1: Report the results for the code as given above from 2006-01-01 to 2019-01-11 to make sure everything runs.</p>
+<p>Next, we can start to modify some of the parameters. First, let's change the maximum leverage allowed. In particular, suppose you cannot take any leverage (that is, the maximum fraction of your account value you can invest in SPY is limited to 100%).</p>
+<p>=&gt; Q2: Report the line of code you changed and report the results as above (alpha, beta, ...). Interpret the results.</p>
+<p>This strategy does particularly well during the financial crisis and the European sovereign debt crisis. Let's see what happens if we exclude these turbulent episodes from the backtest.</p>
+<p>=&gt; Q3: Run the backtest but now from 2013-01-01 to 2019-01-11 (allow for 50% leverage). Report the results again (alpha, ...). Discuss whether you view the low-volatility timing strategy as an attractive investment opportunity going forward.</p>
+<p>Return to the original code above that allows for up to 50% leverage. Now let's look at an ETF that experienced even larger swings in volatility, namely an ETF tracking the financial sector. The ticker is XLF.</p>
+<p>=&gt; Q4: Run the backtest from 2006-01-01 to 2019-01-11. Analyze the results as before. Do you think that the volatility-timed financial sector ETF is an attractive investment opportunity?</p>
+<p>=&gt; Q5: Change the strategy so that you always invest 100% in XLF (so no volatility timing). Report the results as before. Discuss the benefits to volatility timing for the financial-sector ETF.</p>
 
 </div>
 </div>
