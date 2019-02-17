@@ -11791,15 +11791,20 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Mean-variance portfolio theory implies that an investor chooses a tangency portfolio that maximize the Sharpe ratio:</p>
+<p>Mean-variance portfolio theory tells us that an investor chooses the tangency portfolio, i.e. portfolio of risky assets with the highest Sharpe ratio:</p>
 <p>$$
-SR \equiv \frac{\mathbb{E}\left[r\right]-r_f}{\sigma}
+SR \equiv \frac{\mathbb{E}\left[r\right]-r_f}{\sigma_{r-r_f}},
 $$</p>
-<p>and the optimal weight on the tangency portfolio is given by</p>
+<p>and combine the tangency portfolo with the risk-free asset to form an optimal portfolio. The weight on the tangency portfolio is given by</p>
 <p>$$
-w = \frac{SR}{RA \times \sigma}
+w = \frac{SR}{RA \times \sigma_{r-r_f}},
 $$</p>
-<p>Hence there is scope to improve the alpha by volatility timing.</p>
+<p>where RA is risk aversion.</p>
+<p>In the CAPM, all investors hold a mean-variance efficient portfolio and as supply has to equal demand, that is, $w = 1$. Consequently, it holds</p>
+<p>$$
+\mathbb{E}\left[r\right]-r_f = RA \times \sigma_{r-r_f}.
+$$</p>
+<p>Hence, the risk premium depends on risk aversion and the market's volatility. In reality, if the risk premium does not move enough to compensate for variation in volatility, there is scope to improve the risk-return trade-off of our strategy by volatility timing.</p>
 
 </div>
 </div>
@@ -11826,6 +11831,163 @@ $$</p>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Quantopian-Implementation">Quantopian Implementation<a class="anchor-link" href="#Quantopian-Implementation">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="We-follow-the-five-steps-in-building-an-investment-strategy:">We follow the five steps in building an investment strategy:<a class="anchor-link" href="#We-follow-the-five-steps-in-building-an-investment-strategy:">&#182;</a></h3><ol>
+<li><p>What is the economic idea we want to test?
+A: Can we generate alpha by reducing our allocation to the market when the market volatility is high.</p>
+</li>
+<li><p>What is the universe of securities we want to trade?
+A: The market portfolio, which we approximate by an ETF on the S&amp;P500 (ticker: SPY).</p>
+</li>
+<li><p>What is the signal on which we want to trade?
+A: Recent volatility, say, over the last 20 trading days</p>
+</li>
+<li><p>How do we construct our portfolio?
+A: Weight in the market at time t = 0.2 / Annualized volatility at time t.</p>
+</li>
+<li><p>What is the benchmark? 
+A: The ETF itself.</p>
+</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Now-we-can-build-our-strategies-in-Quantopian-in-four-steps:">Now we can build our strategies in Quantopian in four steps:<a class="anchor-link" href="#Now-we-can-build-our-strategies-in-Quantopian-in-four-steps:">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Initialize the strategy:</p>
+<p>This part of the code will be computed once only.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+    
+    <span class="n">context</span><span class="o">.</span><span class="n">SPY</span> <span class="o">=</span> <span class="n">symbol</span><span class="p">(</span><span class="s1">&#39;SPY&#39;</span><span class="p">)</span>
+    
+    <span class="n">schedule_function</span><span class="p">(</span><span class="n">rebalance</span><span class="p">,</span> 
+                      <span class="n">date_rules</span><span class="o">.</span><span class="n">month_start</span><span class="p">(),</span>
+                      <span class="n">time_rules</span><span class="o">.</span><span class="n">market_open</span><span class="p">())</span>
+    
+    <span class="n">schedule_function</span><span class="p">(</span><span class="n">record_vars</span><span class="p">,</span> 
+                     <span class="n">date_rules</span><span class="o">.</span><span class="n">every_day</span><span class="p">(),</span>
+                     <span class="n">time_rules</span><span class="o">.</span><span class="n">market_close</span><span class="p">())</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Compute weights:</p>
+<p>This part of the code will be computed every time (for instance, every day, week or month) when we trade and computes the weights we want to hold.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_weights</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    
+    <span class="n">prices</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">history</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">SPY</span><span class="p">,</span> <span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;1d&#39;</span><span class="p">)</span>
+    <span class="n">returns</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">pct_change</span><span class="p">()</span>
+    <span class="n">std_20</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">250</span><span class="p">)</span>
+    
+    <span class="n">weight</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">/</span> <span class="n">std_20</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">weight</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Rebalance:</p>
+<p>This part of the code will be computed every time we trade and executes the actual transactions.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">rebalance</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">compute_weights</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">can_trade</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">SPY</span><span class="p">):</span>
+        <span class="n">order_target_percent</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">SPY</span><span class="p">,</span><span class="n">weight</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Record variables:</p>
+<p>Here we can record key properties of our strategy. How many long and short positions do we have? How much leverage do we have? We can also choose how often to record the variables, which may be different from how frequently we trade.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">record_vars</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="n">record</span><span class="p">(</span><span class="n">leverage</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">account</span><span class="o">.</span><span class="n">leverage</span><span class="p">,</span> <span class="n">cash</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">portfolio</span><span class="o">.</span><span class="n">cash</span><span class="o">/</span><span class="n">context</span><span class="o">.</span><span class="n">portfolio</span><span class="o">.</span><span class="n">portfolio_value</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Here-is-the-complete-code:">Here is the complete code:<a class="anchor-link" href="#Here-is-the-complete-code:">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -11859,7 +12021,6 @@ $$</p>
     <span class="n">weight</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.2</span> <span class="o">/</span> <span class="n">std_20</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="n">weight</span>
-    
     
 <span class="k">def</span> <span class="nf">rebalance</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
     
